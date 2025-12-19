@@ -1658,21 +1658,75 @@ function updateUnitPanel(config) {
 
 function updateAirstrikeButton() {
     const btn = document.getElementById('airstrike-btn');
-    if (!btn) return;
+    const panel = document.getElementById('airstrike-panel');
     
     const config = gameState.levelConfig;
-    if (!config || !config.airstrike) return;
+    if (!config || !config.airstrike) {
+        if (btn) btn.style.display = 'none';
+        if (panel) panel.classList.add('hidden');
+        return;
+    }
     
-    const canUse = gameState.playerGold >= config.airstrikeCost && 
-                   gameState.playerAirstrikeCooldown <= 0;
+    // Показываем кнопку и панель
+    if (btn) btn.style.display = 'flex';
+    if (panel) panel.classList.remove('hidden');
     
-    btn.disabled = !canUse || gameState.gameOver;
+    const cooldown = gameState.playerAirstrikeCooldown;
+    const maxCooldown = gameState.airstrikeCooldownTime;
+    const hasGold = gameState.playerGold >= config.airstrikeCost;
+    const isReady = cooldown <= 0 && hasGold;
     
-    // Показываем кулдаун
-    if (gameState.playerAirstrikeCooldown > 0) {
-        btn.querySelector('.unit-name').textContent = Math.ceil(gameState.playerAirstrikeCooldown) + 'с';
-    } else {
-        btn.querySelector('.unit-name').textContent = 'Авиаудар';
+    // Обновляем кнопку
+    if (btn) {
+        btn.disabled = !isReady || gameState.gameOver;
+        
+        const nameEl = btn.querySelector('.unit-name');
+        const costEl = btn.querySelector('.unit-cost');
+        
+        if (cooldown > 0) {
+            nameEl.textContent = `⏱️ ${Math.ceil(cooldown)}с`;
+            btn.classList.remove('airstrike-ready');
+            btn.classList.add('airstrike-cooldown');
+        } else if (!hasGold) {
+            nameEl.textContent = 'Авиаудар';
+            btn.classList.remove('airstrike-ready', 'airstrike-cooldown');
+        } else {
+            nameEl.textContent = '✈️ ГОТОВ!';
+            btn.classList.add('airstrike-ready');
+            btn.classList.remove('airstrike-cooldown');
+        }
+        
+        costEl.textContent = config.airstrikeCost + '💰';
+    }
+    
+    // Обновляем панель на экране
+    if (panel) {
+        const barFill = document.getElementById('airstrike-bar-fill');
+        const timerEl = document.getElementById('airstrike-timer');
+        const costDisplay = document.getElementById('airstrike-cost-display');
+        
+        // Стоимость
+        if (costDisplay) {
+            costDisplay.textContent = config.airstrikeCost + '💰';
+        }
+        
+        // Прогресс бар и таймер
+        if (cooldown > 0) {
+            const progress = ((maxCooldown - cooldown) / maxCooldown) * 100;
+            if (barFill) barFill.style.width = progress + '%';
+            if (timerEl) timerEl.textContent = Math.ceil(cooldown) + 'с';
+            panel.classList.remove('ready', 'no-gold');
+        } else if (!hasGold) {
+            if (barFill) barFill.style.width = '100%';
+            if (timerEl) timerEl.textContent = 'Нет 💰';
+            panel.classList.remove('ready');
+            panel.classList.add('no-gold');
+        } else {
+            if (barFill) barFill.style.width = '100%';
+            if (timerEl) timerEl.textContent = '✅ ГОТОВ!';
+            panel.classList.add('ready');
+            panel.classList.remove('no-gold');
+        }
     }
 }
 
@@ -1714,6 +1768,7 @@ document.addEventListener('keydown', (e) => {
             spawnPlayerUnit('tank');
             break;
         case 'q':
+        case 'й':  // Русская раскладка
             activatePlayerAirstrike();
             break;
     }
@@ -1730,6 +1785,23 @@ function activatePlayerAirstrike() {
     
     airstrikeMode = true;
     canvas.style.cursor = 'crosshair';
+    showAirstrikeHint(true);
+}
+
+function showAirstrikeHint(show) {
+    let hint = document.getElementById('airstrike-hint');
+    
+    if (show) {
+        if (!hint) {
+            hint = document.createElement('div');
+            hint.id = 'airstrike-hint';
+            hint.innerHTML = '✈️ Выбери цель для авиаудара!<br><small>ПКМ - отмена</small>';
+            document.getElementById('game-container').appendChild(hint);
+        }
+        hint.classList.add('visible');
+    } else if (hint) {
+        hint.classList.remove('visible');
+    }
 }
 
 // Клик на canvas для авиаудара
@@ -1746,6 +1818,7 @@ canvas.addEventListener('click', (e) => {
     
     airstrikeMode = false;
     canvas.style.cursor = 'default';
+    showAirstrikeHint(false);
 });
 
 // Отмена авиаудара правой кнопкой
@@ -1754,6 +1827,7 @@ canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         airstrikeMode = false;
         canvas.style.cursor = 'default';
+        showAirstrikeHint(false);
     }
 });
 

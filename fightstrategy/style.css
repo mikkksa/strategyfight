@@ -252,6 +252,7 @@ html, body {
 .airstrike-btn {
     background: linear-gradient(180deg, rgba(255, 100, 0, 0.3) 0%, rgba(255, 50, 0, 0.2) 100%) !important;
     border-color: #ff6600 !important;
+    position: relative;
 }
 
 .airstrike-btn:hover:not(:disabled) {
@@ -264,9 +265,174 @@ html, body {
     border-color: #555 !important;
 }
 
+/* Кулдаун авиаудара */
+.airstrike-btn.airstrike-cooldown {
+    background: linear-gradient(180deg, rgba(80, 80, 80, 0.3) 0%, rgba(40, 40, 40, 0.3) 100%) !important;
+    border-color: #666 !important;
+}
+
+.airstrike-btn.airstrike-cooldown .unit-name {
+    color: #aaa;
+}
+
+/* Авиаудар готов! */
+.airstrike-btn.airstrike-ready {
+    background: linear-gradient(180deg, rgba(255, 150, 0, 0.5) 0%, rgba(255, 80, 0, 0.4) 100%) !important;
+    border-color: #ffaa00 !important;
+    animation: airstrike-pulse 1s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(255, 150, 0, 0.5) !important;
+}
+
+.airstrike-btn.airstrike-ready .unit-name {
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 200, 0, 0.8);
+}
+
+@keyframes airstrike-pulse {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 0 15px rgba(255, 150, 0, 0.4);
+    }
+    50% {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 5px 25px rgba(255, 150, 0, 0.6);
+    }
+}
+
+.airstrike-btn.airstrike-ready:hover {
+    animation: none;
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(255, 150, 0, 0.7) !important;
+}
+
 /* Заблокированный юнит */
 .locked-unit {
     display: none !important;
+}
+
+/* Панель авиаудара на экране */
+#airstrike-panel {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    background: var(--bg-panel);
+    border: 2px solid #ff6600;
+    border-radius: 12px;
+    padding: 10px 15px;
+    z-index: 15;
+    min-width: 160px;
+}
+
+#airstrike-panel.hidden {
+    display: none;
+}
+
+.airstrike-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.airstrike-icon {
+    font-size: 24px;
+}
+
+.airstrike-label {
+    font-family: 'Russo One', sans-serif;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.airstrike-cost {
+    font-size: 11px;
+    color: var(--accent-gold);
+    margin-left: auto;
+}
+
+.airstrike-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.airstrike-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.airstrike-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ff6600, #ffaa00);
+    border-radius: 4px;
+    transition: width 0.1s linear;
+}
+
+.airstrike-timer {
+    font-family: 'Russo One', sans-serif;
+    font-size: 11px;
+    color: #ffaa00;
+    min-width: 50px;
+    text-align: right;
+}
+
+#airstrike-panel.ready {
+    border-color: #ffaa00;
+    box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+    animation: panel-pulse 1.5s ease-in-out infinite;
+}
+
+#airstrike-panel.ready .airstrike-timer {
+    color: #00ff00;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+@keyframes panel-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 170, 0, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 170, 0, 0.6); }
+}
+
+#airstrike-panel.no-gold .airstrike-cost {
+    color: #ff4444;
+}
+
+/* Подсказка авиаудара */
+#airstrike-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(255, 100, 0, 0.9);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 15px;
+    font-family: 'Russo One', sans-serif;
+    font-size: 24px;
+    text-align: center;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 10px 40px rgba(255, 100, 0, 0.5);
+    border: 3px solid #ffaa00;
+}
+
+#airstrike-hint.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#airstrike-hint small {
+    display: block;
+    font-size: 14px;
+    margin-top: 8px;
+    opacity: 0.8;
+    font-family: 'Exo 2', sans-serif;
 }
 
 /* ==========================================
