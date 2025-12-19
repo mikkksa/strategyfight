@@ -87,6 +87,7 @@ const gameState = {
     enemyBaseHealth: 1000,
     maxBaseHealth: 1000,
     goldPerSecond: 15,
+    startTime: performance.now(),
     units: [],
     projectiles: [],
     particles: [],
@@ -524,116 +525,8 @@ function createParticles(x, y, color, count) {
 }
 
 // ==========================================
-// AI ПРОТИВНИКА
+// AI ПРОТИВНИКА - подключается из ai.js
 // ==========================================
-class EnemyAI {
-    constructor() {
-        this.decisionCooldown = 0;
-        this.aggressiveness = 0.5; // 0-1, насколько агрессивен AI
-        this.lastPlayerUnits = 0;
-    }
-    
-    update(deltaTime) {
-        this.decisionCooldown -= deltaTime;
-        
-        if (this.decisionCooldown <= 0) {
-            this.makeDecision();
-            this.decisionCooldown = 1 + Math.random() * 2; // Решение каждые 1-3 секунды
-        }
-    }
-    
-    makeDecision() {
-        const gold = gameState.enemyGold;
-        
-        // Считаем юнитов
-        const enemyUnits = gameState.units.filter(u => u.isEnemy && !u.isDead);
-        const playerUnits = gameState.units.filter(u => !u.isEnemy && !u.isDead);
-        
-        // Адаптивная агрессивность
-        if (playerUnits.length > this.lastPlayerUnits + 2) {
-            this.aggressiveness = Math.min(1, this.aggressiveness + 0.1);
-        } else if (enemyUnits.length > playerUnits.length + 3) {
-            this.aggressiveness = Math.max(0.2, this.aggressiveness - 0.1);
-        }
-        this.lastPlayerUnits = playerUnits.length;
-        
-        // Стратегия выбора юнита
-        const strategies = this.getStrategies(gold, enemyUnits, playerUnits);
-        
-        if (strategies.length > 0) {
-            // Выбираем случайную стратегию с весом
-            const totalWeight = strategies.reduce((sum, s) => sum + s.weight, 0);
-            let random = Math.random() * totalWeight;
-            
-            for (const strategy of strategies) {
-                random -= strategy.weight;
-                if (random <= 0) {
-                    this.spawnUnit(strategy.unit);
-                    break;
-                }
-            }
-        }
-    }
-    
-    getStrategies(gold, enemyUnits, playerUnits) {
-        const strategies = [];
-        
-        // Анализ вражеских юнитов
-        const playerRanged = playerUnits.filter(u => u.isRanged).length;
-        const playerMelee = playerUnits.filter(u => !u.isRanged).length;
-        const playerTanks = playerUnits.filter(u => u.type === 'shieldbearer').length;
-        
-        // Если много стрелков у игрока - спавним щитоносцев
-        if (playerRanged > 2 && gold >= UNIT_TYPES.shieldbearer.cost) {
-            strategies.push({ unit: 'shieldbearer', weight: 3 });
-        }
-        
-        // Если много танков - спавним мушкетёров
-        if (playerTanks > 1 && gold >= UNIT_TYPES.musketeer.cost) {
-            strategies.push({ unit: 'musketeer', weight: 3 });
-        }
-        
-        // Базовые стратегии
-        if (gold >= UNIT_TYPES.spearman.cost) {
-            strategies.push({ unit: 'spearman', weight: 2 });
-        }
-        
-        if (gold >= UNIT_TYPES.archer.cost) {
-            strategies.push({ unit: 'archer', weight: 1.5 });
-        }
-        
-        if (gold >= UNIT_TYPES.musketeer.cost && this.aggressiveness > 0.6) {
-            strategies.push({ unit: 'musketeer', weight: 1 });
-        }
-        
-        if (gold >= UNIT_TYPES.shieldbearer.cost) {
-            strategies.push({ unit: 'shieldbearer', weight: 1 });
-        }
-        
-        // Если мало юнитов и много золота - агрессивный спавн
-        if (enemyUnits.length < 3 && gold > 200) {
-            if (gold >= UNIT_TYPES.spearman.cost) {
-                strategies.push({ unit: 'spearman', weight: 3 });
-            }
-        }
-        
-        // Экономия если впереди
-        if (enemyUnits.length > playerUnits.length + 5 && Math.random() > this.aggressiveness) {
-            return []; // Не спавним
-        }
-        
-        return strategies;
-    }
-    
-    spawnUnit(type) {
-        const cost = UNIT_TYPES[type].cost;
-        if (gameState.enemyGold >= cost) {
-            gameState.enemyGold -= cost;
-            gameState.units.push(new Unit(type, true));
-        }
-    }
-}
-
 const enemyAI = new EnemyAI();
 
 // ==========================================
@@ -865,6 +758,22 @@ function showGameOver(isVictory) {
     const gameOverEl = document.getElementById('game-over');
     const textEl = document.getElementById('game-over-text');
     
+    // Логируем конец игры
+    const gameDuration = ((performance.now() - gameState.startTime) / 1000).toFixed(1);
+    AI_LOG.log('GAME_OVER', isVictory ? 'AI ПРОИГРАЛ' : 'AI ПОБЕДИЛ', {
+        winner: isVictory ? 'player' : 'enemy',
+        duration: gameDuration + 's',
+        finalPlayerHP: gameState.playerBaseHealth,
+        finalEnemyHP: gameState.enemyBaseHealth,
+        summary: AI_LOG.getSummary()
+    });
+    
+    // Автоматически скачиваем лог если AI проиграл
+    if (isVictory) {
+        console.log('=== AI ПРОИГРАЛ! Лог доступен через AI_LOG.download() ===');
+        console.log('Сводка:', AI_LOG.getSummary());
+    }
+    
     gameOverEl.classList.remove('hidden');
     
     if (isVictory) {
@@ -877,6 +786,11 @@ function showGameOver(isVictory) {
 }
 
 function restartGame() {
+    // Логируем итоги прошлой игры
+    if (AI_LOG.entries.length > 0) {
+        AI_LOG.log('GAME_END', 'Игра перезапущена', AI_LOG.getSummary());
+    }
+    
     gameState.playerGold = 100;
     gameState.enemyGold = 100;
     gameState.playerBaseHealth = 1000;
@@ -886,6 +800,14 @@ function restartGame() {
     gameState.particles = [];
     gameState.gameOver = false;
     gameState.winner = null;
+    gameState.startTime = performance.now();
+    
+    // Сбрасываем AI
+    enemyAI.reset();
+    
+    // Очищаем лог для новой игры
+    AI_LOG.clear();
+    AI_LOG.log('GAME_START', 'Новая игра началась', {});
     
     document.getElementById('game-over').classList.add('hidden');
 }
@@ -939,5 +861,7 @@ document.addEventListener('touchmove', (e) => {
 
 // Запуск игры
 gameState.lastTime = performance.now();
+gameState.startTime = performance.now();
+AI_LOG.clear();
+AI_LOG.log('GAME_START', 'Игра запущена', {});
 requestAnimationFrame(gameLoop);
-
