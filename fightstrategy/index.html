@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Битва Крепостей</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Верхняя панель с информацией -->
+        <div id="top-panel">
+            <div id="player-info">
+                <div class="base-health">
+                    <span class="label">⚔️ Твоя база</span>
+                    <div class="health-bar">
+                        <div id="player-health-fill" class="health-fill player"></div>
+                    </div>
+                    <span id="player-health-text">1000</span>
+                </div>
+                <div class="gold-display">
+                    <span class="gold-icon">💰</span>
+                    <span id="player-gold">100</span>
+                </div>
+            </div>
+            <div id="enemy-info">
+                <div class="gold-display enemy">
+                    <span class="gold-icon">💰</span>
+                    <span id="enemy-gold">100</span>
+                </div>
+                <div class="base-health">
+                    <span class="label">🏰 База врага</span>
+                    <div class="health-bar">
+                        <div id="enemy-health-fill" class="health-fill enemy"></div>
+                    </div>
+                    <span id="enemy-health-text">1000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель юнитов -->
+        <div id="unit-panel">
+            <button class="unit-btn" data-unit="spearman" data-cost="50">
+                <div class="unit-icon">🗡️</div>
+                <div class="unit-name">Копейщик</div>
+                <div class="unit-cost">50💰</div>
+                <div class="unit-hotkey">[1]</div>
+            </button>
+            <button class="unit-btn" data-unit="archer" data-cost="75">
+                <div class="unit-icon">🏹</div>
+                <div class="unit-name">Лучник</div>
+                <div class="unit-cost">75💰</div>
+                <div class="unit-hotkey">[2]</div>
+            </button>
+            <button class="unit-btn" data-unit="musketeer" data-cost="120">
+                <div class="unit-icon">🔫</div>
+                <div class="unit-name">Мушкетёр</div>
+                <div class="unit-cost">120💰</div>
+                <div class="unit-hotkey">[3]</div>
+            </button>
+            <button class="unit-btn" data-unit="shieldbearer" data-cost="100">
+                <div class="unit-icon">🛡️</div>
+                <div class="unit-name">Щитоносец</div>
+                <div class="unit-cost">100💰</div>
+                <div class="unit-hotkey">[4]</div>
+            </button>
+        </div>
+
+        <!-- Экран победы/поражения -->
+        <div id="game-over" class="hidden">
+            <div class="game-over-content">
+                <h1 id="game-over-text">ПОБЕДА!</h1>
+                <button id="restart-btn">Играть снова</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
+
