@@ -64,7 +64,7 @@ const UNIT_TYPES = {
     shieldbearer: {
         name: 'Щитоносец',
         cost: 100,
-        health: 200,
+        health: 400,
         damage: 10,
         attackSpeed: 0.7,
         moveSpeed: 35,
@@ -187,10 +187,23 @@ class Unit {
                 this.moveTowardsBase(deltaTime);
             }
         } else {
-            // Нет цели - идём к базе
-            this.state = 'moving';
-            this.moveTowardsBase(deltaTime);
-            this.checkBaseAttack();
+            // Нет цели - идём к базе или атакуем её
+            const targetBaseX = this.isEnemy ? gameState.playerBaseX : gameState.enemyBaseX;
+            const distToBase = Math.abs(targetBaseX - this.x);
+            
+            // Стрелки атакуют с дистанции!
+            if (this.isRanged && distToBase <= this.attackRange) {
+                this.state = 'attacking';
+                this.attackBase();
+            } else if (distToBase <= 60) {
+                // Мили атакуют вплотную
+                this.state = 'attacking';
+                this.attackBase();
+            } else {
+                // Идём к базе
+                this.state = 'moving';
+                this.moveTowardsBase(deltaTime);
+            }
         }
         
         return true;
@@ -225,22 +238,31 @@ class Unit {
         this.x += this.direction * this.moveSpeed * deltaTime;
     }
     
-    checkBaseAttack() {
-        if (this.isEnemy) {
-            if (this.x <= gameState.playerBaseX + 60) {
-                this.x = gameState.playerBaseX + 60;
-                if (this.attackCooldown <= 0) {
+    attackBase() {
+        if (this.attackCooldown <= 0) {
+            this.attackCooldown = 1 / this.attackSpeed;
+            
+            const targetBaseX = this.isEnemy ? gameState.playerBaseX : gameState.enemyBaseX;
+            const baseY = gameState.groundY - 60; // Центр базы
+            
+            if (this.isRanged) {
+                // Стрелки создают снаряд в базу
+                gameState.projectiles.push(new BaseProjectile(
+                    this.x,
+                    this.y - this.height / 2,
+                    targetBaseX,
+                    baseY,
+                    this.damage,
+                    this.projectileSpeed,
+                    this.isEnemy
+                ));
+            } else {
+                // Мили бьют напрямую
+                if (this.isEnemy) {
                     gameState.playerBaseHealth -= this.damage;
-                    this.attackCooldown = 1 / this.attackSpeed;
                     createParticles(gameState.playerBaseX + 40, this.y, '#4a90d9', 5);
-                }
-            }
-        } else {
-            if (this.x >= gameState.enemyBaseX - 60) {
-                this.x = gameState.enemyBaseX - 60;
-                if (this.attackCooldown <= 0) {
+                } else {
                     gameState.enemyBaseHealth -= this.damage;
-                    this.attackCooldown = 1 / this.attackSpeed;
                     createParticles(gameState.enemyBaseX - 40, this.y, '#d94a4a', 5);
                 }
             }
@@ -428,7 +450,7 @@ class Unit {
 }
 
 // ==========================================
-// КЛАСС СНАРЯДА
+// КЛАСС СНАРЯДА (по юнитам)
 // ==========================================
 class Projectile {
     constructor(x, y, target, damage, speed, isEnemy) {
@@ -464,6 +486,64 @@ class Projectile {
         }
         
         // Движение к цели
+        this.x += (dx / dist) * this.speed * deltaTime;
+        this.y += (dy / dist) * this.speed * deltaTime;
+        
+        return true;
+    }
+    
+    draw() {
+        if (!this.active) return;
+        
+        ctx.fillStyle = this.isEnemy ? '#ff6b6b' : '#ffd700';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // След
+        ctx.fillStyle = this.isEnemy ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 215, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(this.x - 5, this.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// ==========================================
+// КЛАСС СНАРЯДА ПО БАЗЕ
+// ==========================================
+class BaseProjectile {
+    constructor(x, y, targetX, targetY, damage, speed, isEnemy) {
+        this.x = x;
+        this.y = y;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.damage = damage;
+        this.speed = speed;
+        this.isEnemy = isEnemy;
+        this.active = true;
+    }
+    
+    update(deltaTime) {
+        if (!this.active) return false;
+        
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < 20) {
+            // Попадание в базу
+            if (this.isEnemy) {
+                gameState.playerBaseHealth -= this.damage;
+                createParticles(this.targetX, this.targetY, '#4a90d9', 5);
+            } else {
+                gameState.enemyBaseHealth -= this.damage;
+                createParticles(this.targetX, this.targetY, '#d94a4a', 5);
+            }
+            this.active = false;
+            return false;
+        }
+        
+        // Движение к базе
         this.x += (dx / dist) * this.speed * deltaTime;
         this.y += (dy / dist) * this.speed * deltaTime;
         
