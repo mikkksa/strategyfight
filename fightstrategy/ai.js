@@ -100,9 +100,18 @@ class EnemyAI {
   update(deltaTime) {
     this.decisionCooldown -= deltaTime;
 
-    // Спавним из очереди
-    if (this.spawnQueue.length > 0 && gameState.enemyGold >= UNIT_TYPES[this.spawnQueue[0]].cost) {
-      this.spawnUnit(this.spawnQueue.shift());
+    // Спавним из очереди (только доступные юниты!)
+    if (this.spawnQueue.length > 0) {
+      const nextUnit = this.spawnQueue[0];
+      const config = gameState.levelConfig;
+      const isUnlocked = config && config.unlockedUnits.includes(nextUnit);
+      
+      if (isUnlocked && gameState.enemyGold >= UNIT_TYPES[nextUnit].cost) {
+        this.spawnUnit(this.spawnQueue.shift());
+      } else if (!isUnlocked) {
+        // Юнит недоступен на этом уровне - убираем из очереди
+        this.spawnQueue.shift();
+      }
     }
 
     // Если очередь пуста и есть золото - думаем
@@ -113,6 +122,43 @@ class EnemyAI {
     if (this.decisionCooldown <= 0) {
       this.think();
       this.decisionCooldown = this.baseDecisionInterval + Math.random() * 0.1;
+    }
+    
+    // Проверяем возможность авиаудара
+    this.considerAirstrike();
+  }
+  
+  considerAirstrike() {
+    const config = gameState.levelConfig;
+    if (!config || !config.airstrike) return;
+    if (gameState.enemyAirstrikeCooldown > 0) return;
+    if (gameState.enemyGold < config.airstrikeCost) return;
+    
+    // Считаем врагов в разных зонах
+    const playerUnits = gameState.units.filter(u => !u.isEnemy && !u.isDead);
+    if (playerUnits.length < 3) return; // Не тратим на малое количество
+    
+    // Находим скопление врагов
+    let bestX = 0;
+    let bestCount = 0;
+    
+    for (let x = 200; x < canvas.width * 0.7; x += 50) {
+      let count = 0;
+      for (const unit of playerUnits) {
+        if (Math.abs(unit.x - x) < config.airstrikeRadius) {
+          count++;
+        }
+      }
+      if (count > bestCount) {
+        bestCount = count;
+        bestX = x;
+      }
+    }
+    
+    // Бьём если 3+ врагов в зоне
+    if (bestCount >= 3) {
+      AI_LOG.log('AIRSTRIKE', 'AI вызывает авиаудар!', { targetX: bestX, enemiesInZone: bestCount });
+      callAirstrike(bestX, true);
     }
   }
 
@@ -285,8 +331,20 @@ class EnemyAI {
         return;
       }
       
+      // Проверяем доступные юниты на этом уровне
+      const config = gameState.levelConfig;
+      const canTank = config && config.unlockedUnits.includes('tank');
+      const canMusketeer = config && config.unlockedUnits.includes('musketeer');
+      
+      // Танк - мощный выбор на 3 уровне (20% шанс если хватает денег)
+      if (canTank && luck < 0.2 && gold >= UNIT_TYPES.tank.cost) {
+        this.spawn('tank', 'АТАКА: Танк - мощная огневая поддержка');
+        this.queueUnit('spearman');
+        return;
+      }
+      
       // Хватает на мушкетёра - делаем
-      if (gold >= UNIT_TYPES.musketeer.cost) {
+      if (canMusketeer && gold >= UNIT_TYPES.musketeer.cost) {
         this.spawn('musketeer', 'АТАКА: Мушкетёр для огневой мощи');
         // Добавляем копейщиков для прикрытия
         this.queueUnit('spearman');

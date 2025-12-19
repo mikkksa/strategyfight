@@ -10,8 +10,45 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         
+        <!-- Меню выбора уровня -->
+        <div id="level-select">
+            <div class="level-select-content">
+                <h1>⚔️ БИТВА КРЕПОСТЕЙ ⚔️</h1>
+                <p class="subtitle">Выбери уровень сложности</p>
+                
+                <div class="levels-grid">
+                    <div class="level-card" data-level="1">
+                        <div class="level-number">I</div>
+                        <div class="level-name">Средневековье</div>
+                        <div class="level-desc">⚔️ Мечи и луки</div>
+                        <div class="level-features">Копейщик • Лучник</div>
+                        <div class="level-stars" id="stars-1">☆☆☆</div>
+                        <div class="level-status">🔓</div>
+                    </div>
+                    
+                    <div class="level-card locked" data-level="2">
+                        <div class="level-number">II</div>
+                        <div class="level-name">Эпоха пороха</div>
+                        <div class="level-desc">🔫 Мушкеты и пушки</div>
+                        <div class="level-features">+ Мушкетёр • Щитоносец<br>🏰 Пушка на базе<br>✈️ Авиаудар</div>
+                        <div class="level-stars" id="stars-2">☆☆☆</div>
+                        <div class="level-status" id="lock-2">🔒</div>
+                    </div>
+                    
+                    <div class="level-card locked" data-level="3">
+                        <div class="level-number">III</div>
+                        <div class="level-name">Современность</div>
+                        <div class="level-desc">🎖️ Танки и авиация</div>
+                        <div class="level-features">+ Танк<br>🏰 Пулемёт на базе<br>💥 Мощный авиаудар</div>
+                        <div class="level-stars" id="stars-3">☆☆☆</div>
+                        <div class="level-status" id="lock-3">🔒</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Верхняя панель с информацией -->
-        <div id="top-panel">
+        <div id="top-panel" class="hidden">
             <div id="player-info">
                 <div class="base-health">
                     <span class="label">⚔️ Твоя база</span>
@@ -24,6 +61,9 @@
                     <span class="gold-icon">💰</span>
                     <span id="player-gold">100</span>
                 </div>
+            </div>
+            <div id="level-indicator">
+                <span id="current-level-name">Уровень 1</span>
             </div>
             <div id="enemy-info">
                 <div class="gold-display enemy">
@@ -41,7 +81,7 @@
         </div>
 
         <!-- Панель юнитов -->
-        <div id="unit-panel">
+        <div id="unit-panel" class="hidden">
             <button class="unit-btn" data-unit="spearman" data-cost="50">
                 <div class="unit-icon">🗡️</div>
                 <div class="unit-name">Копейщик</div>
@@ -66,13 +106,32 @@
                 <div class="unit-cost">100💰</div>
                 <div class="unit-hotkey">[4]</div>
             </button>
+            <button class="unit-btn" data-unit="tank" data-cost="250">
+                <div class="unit-icon">🛡️</div>
+                <div class="unit-name">Танк</div>
+                <div class="unit-cost">250💰</div>
+                <div class="unit-hotkey">[5]</div>
+            </button>
+            <div class="panel-divider"></div>
+            <button class="unit-btn airstrike-btn" id="airstrike-btn" data-cost="200">
+                <div class="unit-icon">✈️</div>
+                <div class="unit-name">Авиаудар</div>
+                <div class="unit-cost">200💰</div>
+                <div class="unit-hotkey">[Q]</div>
+            </button>
         </div>
 
         <!-- Экран победы/поражения -->
         <div id="game-over" class="hidden">
             <div class="game-over-content">
                 <h1 id="game-over-text">ПОБЕДА!</h1>
-                <button id="restart-btn">Играть снова</button>
+                <div id="stars-earned" class="stars-display">⭐⭐⭐</div>
+                <p id="game-over-stats"></p>
+                <div class="game-over-buttons">
+                    <button id="restart-btn">Переиграть</button>
+                    <button id="menu-btn">В меню</button>
+                    <button id="next-level-btn" class="hidden">Следующий уровень →</button>
+                </div>
             </div>
         </div>
     </div>
@@ -82,4 +141,3 @@
     <script src="game.js"></script>
 </body>
 </html>
-
