@@ -1831,8 +1831,11 @@ canvas.addEventListener('contextmenu', (e) => {
     }
 });
 
-// Кнопка авиаудара
+// Кнопка авиаудара (в панели юнитов)
 document.getElementById('airstrike-btn')?.addEventListener('click', activatePlayerAirstrike);
+
+// Панель авиаудара на экране (тоже кликабельна)
+document.getElementById('airstrike-panel')?.addEventListener('click', activatePlayerAirstrike);
 
 // Кнопки конца игры
 document.getElementById('restart-btn').addEventListener('click', restartGame);

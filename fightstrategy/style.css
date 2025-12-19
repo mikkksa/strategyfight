@@ -322,6 +322,16 @@ html, body {
     padding: 10px 15px;
     z-index: 15;
     min-width: 160px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#airstrike-panel:hover {
+    transform: scale(1.02);
+}
+
+#airstrike-panel.ready:hover {
+    box-shadow: 0 0 25px rgba(255, 170, 0, 0.7);
 }
 
 #airstrike-panel.hidden {
