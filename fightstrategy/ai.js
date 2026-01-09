@@ -134,30 +134,50 @@ class EnemyAI {
     if (gameState.enemyAirstrikeCooldown > 0) return;
     if (gameState.enemyGold < config.airstrikeCost) return;
     
-    // Считаем врагов в разных зонах
+    // Считаем врагов игрока
     const playerUnits = gameState.units.filter(u => !u.isEnemy && !u.isDead);
-    if (playerUnits.length < 3) return; // Не тратим на малое количество
     
     // Находим скопление врагов
     let bestX = 0;
     let bestCount = 0;
+    let bestValue = 0; // Ценность целей
     
-    for (let x = 200; x < canvas.width * 0.7; x += 50) {
+    for (let x = 150; x < canvas.width * 0.8; x += 40) {
       let count = 0;
+      let value = 0;
+      
       for (const unit of playerUnits) {
         if (Math.abs(unit.x - x) < config.airstrikeRadius) {
           count++;
+          // Ценим дорогих юнитов больше
+          value += UNIT_TYPES[unit.type].cost;
         }
       }
-      if (count > bestCount) {
+      
+      if (value > bestValue) {
+        bestValue = value;
         bestCount = count;
         bestX = x;
       }
     }
     
-    // Бьём если 3+ врагов в зоне
-    if (bestCount >= 3) {
-      AI_LOG.log('AIRSTRIKE', 'AI вызывает авиаудар!', { targetX: bestX, enemiesInZone: bestCount });
+    // Бьём если:
+    // - 3+ врагов в зоне, ИЛИ
+    // - 2+ врага и общая ценность > 150 (дорогие юниты), ИЛИ
+    // - База под угрозой (враги близко к базе AI)
+    const baseUnderThreat = playerUnits.some(u => u.x > canvas.width * 0.7);
+    
+    const shouldStrike = bestCount >= 3 || 
+                         (bestCount >= 2 && bestValue >= 150) ||
+                         (baseUnderThreat && bestCount >= 2);
+    
+    if (shouldStrike && bestCount > 0) {
+      AI_LOG.log('AIRSTRIKE', 'AI вызывает авиаудар!', { 
+        targetX: bestX, 
+        enemiesInZone: bestCount, 
+        totalValue: bestValue,
+        baseUnderThreat 
+      });
       callAirstrike(bestX, true);
     }
   }

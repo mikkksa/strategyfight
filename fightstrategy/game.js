@@ -21,13 +21,11 @@ const LEVELS = {
         name: 'Средневековье',
         era: 'medieval',
         description: 'Мечи и луки',
-        playerGold: 100,
-        enemyGold: 80,
-        playerBaseHealth: 1000,
-        enemyBaseHealth: 800,
+        // Честные условия - одинаковые для игрока и AI
+        startGold: 100,
+        baseHealth: 1000,
         goldPerSecond: 15,
-        enemyGoldPerSecond: 12,
-        aiSpeed: 0.4,
+        aiSpeed: 0.4,              // Скорость реакции AI
         // Доступные юниты
         unlockedUnits: ['spearman', 'archer'],
         // База
@@ -48,12 +46,10 @@ const LEVELS = {
         name: 'Эпоха пороха',
         era: 'gunpowder',
         description: 'Мушкеты и пушки',
-        playerGold: 120,
-        enemyGold: 120,
-        playerBaseHealth: 1200,
-        enemyBaseHealth: 1200,
+        // Честные условия
+        startGold: 120,
+        baseHealth: 1200,
         goldPerSecond: 18,
-        enemyGoldPerSecond: 18,
         aiSpeed: 0.25,
         // Доступные юниты
         unlockedUnits: ['spearman', 'archer', 'musketeer', 'shieldbearer'],
@@ -75,12 +71,10 @@ const LEVELS = {
         name: 'Современность',
         era: 'modern',
         description: 'Танки и авиация',
-        playerGold: 150,
-        enemyGold: 180,
-        playerBaseHealth: 1500,
-        enemyBaseHealth: 2000,
+        // Честные условия
+        startGold: 150,
+        baseHealth: 1500,
         goldPerSecond: 22,
-        enemyGoldPerSecond: 25,
         aiSpeed: 0.15,
         // Все юниты + танк!
         unlockedUnits: ['spearman', 'archer', 'musketeer', 'shieldbearer', 'tank'],
@@ -1542,15 +1536,15 @@ function startLevel(level) {
     currentLevel = level;
     gameState.levelConfig = config;
     
-    // Применяем настройки уровня
-    gameState.playerGold = config.playerGold;
-    gameState.enemyGold = config.enemyGold;
-    gameState.playerBaseHealth = config.playerBaseHealth;
-    gameState.maxBaseHealth = config.playerBaseHealth;
-    gameState.enemyBaseHealth = config.enemyBaseHealth;
-    gameState.maxEnemyBaseHealth = config.enemyBaseHealth;
+    // Честные условия - одинаковые для игрока и AI
+    gameState.playerGold = config.startGold;
+    gameState.enemyGold = config.startGold;           // Одинаковое золото
+    gameState.playerBaseHealth = config.baseHealth;
+    gameState.maxBaseHealth = config.baseHealth;
+    gameState.enemyBaseHealth = config.baseHealth;    // Одинаковое HP
+    gameState.maxEnemyBaseHealth = config.baseHealth;
     gameState.goldPerSecond = config.goldPerSecond;
-    gameState.enemyGoldPerSecond = config.enemyGoldPerSecond;
+    gameState.enemyGoldPerSecond = config.goldPerSecond; // Одинаковая скорость
     gameState.units = [];
     gameState.projectiles = [];
     gameState.particles = [];
